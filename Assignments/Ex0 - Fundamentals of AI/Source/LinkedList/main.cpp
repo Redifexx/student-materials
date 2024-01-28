@@ -17,6 +17,7 @@ void printCString(char const* testString);
 
 int main()
 {
+
     // Get ready.
     fund::LinkedList<string> valueList;
     fund::LinkedList<char const*> pointerList;

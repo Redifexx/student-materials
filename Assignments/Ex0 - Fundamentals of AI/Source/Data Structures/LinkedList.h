@@ -1,5 +1,6 @@
 #include <iterator>
-
+#include <iostream>
+using namespace std;
 
 // LinkedList class should go in the "ufl_cap4053::fundamentals" namespace!
 namespace ufl_cap4053 {
@@ -9,6 +10,12 @@ namespace ufl_cap4053 {
 		private:
 			struct Node
 			{
+				Node()
+				{
+					data = "";
+					next = nullptr;
+					prev = nullptr;
+				};
 				T data;
 				Node* next;
 				Node* prev;
@@ -22,28 +29,57 @@ namespace ufl_cap4053 {
 			public:
 				Node* cur;
 
-				T operator*() const
+				Iterator()
 				{
+					cur = nullptr;
+				};
+
+				T operator*() const
+				{ 
 					return cur->data;
 				};
 
 				Iterator& operator++()
 				{	
-					if (cur->next != nullptr)
+					if (cur)
 					{
-						cur = cur->next;
+						if (cur->next == nullptr)
+						{
+							cur = nullptr;
+						}
+						else
+						{
+							cur = cur->next;
+						}
 					}
 					return *this;
 				};
 
 				bool operator==(Iterator const& rhs)
 				{
-					return (cur == rhs.cur);
+					
+					if (rhs.cur == nullptr)
+					{
+						return (cur == nullptr);
+					}
+					else
+					{
+						return (cur->data == rhs.cur->data);
+					}
+					
 				};
 
 				bool operator!=(Iterator const& rhs)
 				{
-					return (cur == rhs.cur);
+					
+					if (rhs.cur == nullptr)
+					{
+						return (cur != nullptr);
+					}
+					else
+					{
+						return (cur->data != rhs.cur->data);
+					}
 				};
 
 			};
@@ -53,18 +89,24 @@ namespace ufl_cap4053 {
 				nodeCount = 0;
 			};
 
+			~LinkedList<T>()
+			{
+				delete head;
+				delete tail;
+			};
+
 			Iterator begin() const
 			{
-				Iterator* itr = new Iterator;
-				itr->cur = head;
-				return *itr;
+				Iterator temp;
+				temp.cur = head;
+				return temp;
 			};
 
 			Iterator end() const
 			{
-				Iterator* itr = new Iterator;
-				itr->cur = tail;
-				return *itr;
+				Iterator temp;
+				temp.cur = nullptr;
+				return temp;
 			};
 
 			bool isEmpty() const
@@ -86,6 +128,7 @@ namespace ufl_cap4053 {
 			{
 				if (isEmpty())
 				{
+					delete head;
 					head = new Node;
 					head->data = element;
 					tail = head;
@@ -110,8 +153,15 @@ namespace ufl_cap4053 {
 					{
 						head->next->prev = nullptr;
 						head = head->next;
+						delete temp;
 					}
-					delete temp;
+					else
+					{
+						delete temp;
+						head = new Node;
+						head->data = "";
+						tail = head;
+					}
 					nodeCount--;
 				}
 			};
@@ -125,8 +175,15 @@ namespace ufl_cap4053 {
 					{
 						tail->prev->next = nullptr;
 						tail = tail->prev;
+						delete temp;
 					}
-					delete temp;
+					else
+					{
+						delete temp;
+						tail = new Node;
+						tail->data = "";
+						head = tail;
+					}
 					nodeCount--;
 				}
 			};
@@ -135,12 +192,10 @@ namespace ufl_cap4053 {
 			{
 				if (!isEmpty())
 				{
-					while (head != tail)
+					while (!isEmpty())
 					{
 						pop();
 					}
-					delete head;
-					nodeCount = 0;
 				}
 			};
 
@@ -178,8 +233,8 @@ namespace ufl_cap4053 {
 						}
 						else
 						{
-							temp->next->prev = temp->prev->next;
-							temp->prev->next = temp->next->prev;
+							temp->next->prev = temp->prev;
+							temp->prev->next = temp->next;
 							delete temp;
 							nodeCount--;
 						}
