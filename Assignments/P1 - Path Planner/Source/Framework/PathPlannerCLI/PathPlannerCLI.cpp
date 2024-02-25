@@ -1,6 +1,8 @@
 // Path Planner CLI.
 // Code by Jeremiah Blanchard, February 2021
-
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -90,6 +92,8 @@ int main(int argc, char* argv[])
 		std::cout << "Done.\n";
 		std::cout << result << "\n";
 
+		_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+		_CrtDumpMemoryLeaks();
 		return EXIT_SUCCESS;
 	}
 	catch (std::exception& e)

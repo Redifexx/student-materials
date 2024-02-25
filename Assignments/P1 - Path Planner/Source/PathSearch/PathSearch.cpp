@@ -1,5 +1,4 @@
 #include "PathSearch.h"
-
 namespace ufl_cap4053
 {
 	namespace searches
@@ -214,8 +213,6 @@ namespace ufl_cap4053
 					std::cout << "Heuristic Cost: " << curNode->hCost << std::endl;
 					std::cout << "Given Cost: " << curNode->givenCost << std::endl;
 					std::cout << "Final Cost: " << curNode->fCost << std::endl;
-					std::cout << "Number of Nodes Created: " << searchGraph.size() << std::endl;
-					std::cout << "\n";
 					std::cout << "Size of Solution Path: " << solution.size() << std::endl;
 					break;
 				}
@@ -227,7 +224,7 @@ namespace ufl_cap4053
 					{
 						if (adjacent->getWeight() != 0) //if not inaccessible
 						{
-							searchGraph[adjacent]->givenCost = curNode->givenCost + searchGraph[adjacent]->weight;
+							searchGraph[adjacent]->givenCost = curNode->givenCost + ((tileMap->getTileRadius() * 2) * (int)searchGraph[adjacent]->weight);
 							searchGraph[adjacent]->hCost = getDistance(adjacent, tileMap->getGoalTile());
 							searchGraph[adjacent]->updateFCost();
 							searchQueue->push(*searchGraph[adjacent]);
@@ -238,9 +235,15 @@ namespace ufl_cap4053
 					}
 					else
 					{
-						if ((curNode->givenCost + searchGraph[adjacent]->weight) < searchGraph[adjacent]->givenCost)
+						if ((curNode->givenCost + ((tileMap->getTileRadius() * 2) * (int)searchGraph[adjacent]->weight)) < searchGraph[adjacent]->givenCost)
 						{
-							searchGraph[adjacent]->givenCost = curNode->givenCost + searchGraph[adjacent]->weight;
+							itr = openTiles.find(adjacent);
+							if (itr != openTiles.end())
+							{
+								openTiles.erase(itr);
+							}
+							searchQueue->remove(*searchGraph[adjacent]);
+							searchGraph[adjacent]->givenCost = curNode->givenCost + ((tileMap->getTileRadius() * 2) * (int)searchGraph[adjacent]->weight);
 							searchGraph[adjacent]->updateFCost();
 							searchGraph[adjacent]->parent = curNode;
 							itr = openTiles.find(adjacent);
@@ -277,7 +280,18 @@ namespace ufl_cap4053
 
 		void PathSearch::unload()
 		{
+			std::vector<TileNode*> choppingBlock;
+			for (auto& node : searchGraph)
+			{
+				TileNode* curNode = node.second;
+				choppingBlock.push_back(curNode);
+			}
+			for (TileNode* node : choppingBlock)
+			{
+				delete node;
+			}
 			searchGraph.clear();
+			//delete searchQueue;
 		}
 
 		bool PathSearch::isDone() const

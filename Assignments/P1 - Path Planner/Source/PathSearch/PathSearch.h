@@ -50,6 +50,10 @@ namespace ufl_cap4053
 					hCost = 0;
 					fCost = 0;
 				}
+				bool operator==(const TileNode& rhs) const 
+				{
+					return tile == rhs.tile;
+				}
 				void updateFCost()
 				{
 					fCost = givenCost + (hWeight * hCost);
@@ -60,7 +64,6 @@ namespace ufl_cap4053
 			std::unordered_map<Tile*, TileNode*> searchGraph;
 
 			PriorityQueue<TileNode>* searchQueue;
-
 
 			std::vector<double> elapsedTimes;
 
