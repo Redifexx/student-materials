@@ -69,43 +69,6 @@ namespace CAP4053.Student
             Console.WriteLine("Current Target: " + curTarget.botName);
         }
 
-        public void aimAtTarget()
-        {
-            if (curTarget.botName != "null")
-            {
-                double angleToTarget = Math.Atan2(curTarget.lastKnownY - this.Y, curTarget.lastKnownX - this.X);
-                SetTurnGunRightRadians(Utils.NormalRelativeAngle(angleToTarget - GunHeadingRadians));
-                SetTurnRadarRightRadians(Utils.NormalRelativeAngle(angleToTarget - RadarHeadingRadians));
-            }
-        }
-
-        public void faceTarget()
-        {
-            if (curTarget.botName != "null")
-            {
-                double angleToTarget = Math.Atan2(curTarget.lastKnownY - this.Y, curTarget.lastKnownX - this.X);
-                //while (true)
-                //{
-                //
-                //}
-                Console.WriteLine("Target Angle: " + (angleToTarget * (180.0 / Math.PI)));
-                Console.WriteLine("Target X: " + curTarget.lastKnownX);
-                Console.WriteLine("Target Y: " + curTarget.lastKnownY);
-                SetTurnRightRadians(Utils.NormalRelativeAngle(angleToTarget - HeadingRadians));
-                //double desiredTurn = (this.RadarHeading + 360) % 360;
-                //TurnRadarRight(360);
-                //while (true)
-                //{
-                //    double remainingTurn = (this.RadarHeading - desiredTurn + 360) % 360;
-                //    if (Math.Abs(remainingTurn) < 1)
-                //    {
-                //        break;
-                //    }
-                //    TurnRadarRight(remainingTurn);
-                //}
-            }
-        }
-
         public void circleTarget()
         {
             if (curTarget.botName != "null")
@@ -122,14 +85,12 @@ namespace CAP4053.Student
                 SetTurnRightRadians(Utils.NormalRelativeAngle(angleToCenter - HeadingRadians));
                 SetAhead(distanceToCenter);
 
-                aimAtTarget();
-
             }
         }
 
-        public void shootTarget(double power_)
+        public void shootTarget(double distance_)
         {
-
+            Fire(1);
         }
 
         override public void Run()
@@ -143,28 +104,11 @@ namespace CAP4053.Student
                 }
                 if (isFacingTarget)
                 {
-                    //Fire(1);
-                    //Console.WriteLine("RUNNIN");
-                    //if (isInRange)
-                    //{
-                    //    //Console.WriteLine("RUNNIN");
-                    //    Fire(1);
-                    //}
                     if (!isInRange)
                     {
                         Ahead(100);
                     }
-                    //Ahead(100);
                 }
-                //circleTarget();
-                //aimAtTarget();
-                //faceTarget();
-                //Execute();
-                //Console.WriteLine(this.Energy);
-                //Ahead(100);
-                //TurnRight(90);
-                //Back(100);
-                //TurnGunRight(360);
             }
         }
 
@@ -215,7 +159,6 @@ namespace CAP4053.Student
                 if (!isScanning)
                 {
                     setTarget();
-                    faceTarget();
                 }
             } 
         }
