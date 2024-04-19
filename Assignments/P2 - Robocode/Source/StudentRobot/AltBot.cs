@@ -9,18 +9,18 @@ using System.Text;
 
 namespace CAP4053.Student
 {
-    public class RediBot : TeamRobot
+    public class AltBot : TeamRobot
     {
         public struct Bot
         {
             public string botName;
             public double lastKnownEnergy;
             public double lastKnownDistance;
-            //public double lastKnownVelocity;
-            //public double lastKnownX;
-            //public double lastKnownY;
-            //public int bulletsSent;
-            //public int bulletsReceived;
+            public double lastKnownVelocity;
+            public double lastKnownX;
+            public double lastKnownY;
+            public int bulletsSent;
+            public int bulletsReceived;
             public Bot(string botName_)
             {
                 botName = botName_;
@@ -38,19 +38,16 @@ namespace CAP4053.Student
         public bool isFacingTarget = false;
         public bool isInRange = false;
 
-        //Rules i guess
-        public double farDistance = 600;
-
         public void scanEnv()
         {
             Console.WriteLine("Scanning environment.");
             isScanning = true;
             TurnRight(360);
-            //if (!isFacingTarget)
-            //{
-            //    Console.WriteLine("SCAN");
-            //    Scan();
-            //}
+            if (!isFacingTarget)
+            {
+                Console.WriteLine("SCAN");
+                Scan();
+            }
             isScanning = false;
             Console.WriteLine("Finished!");
         }
@@ -96,23 +93,22 @@ namespace CAP4053.Student
             Fire(1);
         }
 
-        public void stateSelector()
-        {
-            if (!hasTarget)
-            {
-                scanEnv(); //Can be inturupted
-            }
-            else
-            {
-                
-            }
-        }
-
         override public void Run()
         {
+            scanEnv();
             while (true)
             {
-                stateSelector();
+                if (isScanning)
+                {
+                    scanEnv();
+                }
+                if (isFacingTarget)
+                {
+                    if (!isInRange)
+                    {
+                        Ahead(100);
+                    }
+                }
             }
         }
 
@@ -120,23 +116,51 @@ namespace CAP4053.Student
         {
             //isScanning = false;
             Console.WriteLine("Enemy Bearing: " + e.Bearing);
-            Console.WriteLine("Enemy Distance: " + e.Distance);
-            Console.WriteLine("Enemy Energy: " + e.Energy);
-
-            if (isScanning)
+            TurnRight(e.Bearing);
+            if (Math.Abs(e.Bearing) < 0.01)
             {
+                isFacingTarget = true;
+            }
+            if (isFacingTarget)
+            {
+                Console.WriteLine("Moving Forward!");
+                //Ahead(e.Distance / 2);
+                if (e.Distance < 100)
+                {
+                    isInRange = true;
+                }
+                else
+                {
+                    isInRange = false;
+                }
                 Bot curBot;
                 if (!enemyNames.TryGetValue(e.Name, out curBot))
                 {
                     Console.WriteLine("Adding " + e.Name);
                     curBot = new Bot(e.Name);
                     enemyNames[e.Name] = curBot;
+                    curBot.bulletsReceived = 0;
+                    curBot.bulletsSent = 0;
                     enemyBots.Add(curBot);
                 }
                 //Update Bot Values
                 curBot.lastKnownEnergy = e.Energy;
                 curBot.lastKnownDistance = e.Distance;
-            }    
+                curBot.lastKnownVelocity = e.Velocity;
+                double enemyBearing = (this.HeadingRadians + e.BearingRadians) % (2 * Math.PI);
+
+
+                curBot.lastKnownX = this.X + (e.Distance * Math.Cos(enemyBearing));
+                curBot.lastKnownY = this.Y + (e.Distance * Math.Sin(enemyBearing));
+                Console.WriteLine("Dist: " + e.Distance);
+                Console.WriteLine("Enemy Bearing: " + enemyBearing);
+                Console.WriteLine("Target X: " + curBot.lastKnownX);
+                Console.WriteLine("Target Y: " + curBot.lastKnownY);
+                if (!isScanning)
+                {
+                    setTarget();
+                }
+            }
         }
 
         //When it sees another robot in the direction of the gun
@@ -188,12 +212,12 @@ namespace CAP4053.Student
 
         override public void OnBulletHit(BulletHitEvent e)
         {
-            
+
         }
 
         override public void OnBulletHitBullet(BulletHitBulletEvent e)
         {
-            
+
         }
 
         override public void OnBulletMissed(BulletMissedEvent e)

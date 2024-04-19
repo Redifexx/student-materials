@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\gohan\\source\\repos\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj": {}
+    "C:\\Users\\Gio\\Documents\\GitHub\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj": {}
   },
   "projects": {
-    "C:\\Users\\gohan\\source\\repos\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj": {
+    "C:\\Users\\Gio\\Documents\\GitHub\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\gohan\\source\\repos\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj",
+        "projectUniqueName": "C:\\Users\\Gio\\Documents\\GitHub\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj",
         "projectName": "MyTeam",
-        "projectPath": "C:\\Users\\gohan\\source\\repos\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj",
-        "packagesPath": "C:\\Users\\gohan\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\gohan\\source\\repos\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\obj\\",
+        "projectPath": "C:\\Users\\Gio\\Documents\\GitHub\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\StudentRobot.csproj",
+        "packagesPath": "C:\\Users\\Gio\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Gio\\Documents\\GitHub\\student-materials\\Assignments\\P2 - Robocode\\Source\\StudentRobot\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\gohan\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\Gio\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -43,7 +39,7 @@
       "frameworks": {
         "net481": {
           "targetAlias": "net481",
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
         }
       }
     }
