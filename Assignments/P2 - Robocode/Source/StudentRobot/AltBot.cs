@@ -14,13 +14,17 @@ namespace CAP4053.Student
         public struct Bot
         {
             public string botName;
-            public double lastKnownEnergy;
-            public double lastKnownDistance;
-            public double lastKnownVelocity;
-            public double lastKnownX;
-            public double lastKnownY;
-            public int bulletsSent;
-            public int bulletsReceived;
+            public double roughEnergy;
+            public double roughDistance;
+            public double roughHeading;
+            public double roughVelocity;
+
+            public double roughDirX;
+            public double roughDirY;
+            public double roughX;
+            public double roughY;
+            //public int bulletsSent;
+            //public int bulletsReceived;
             public Bot(string botName_)
             {
                 botName = botName_;
@@ -29,7 +33,6 @@ namespace CAP4053.Student
 
         List<Bot> enemyBots = new List<Bot>();
         Dictionary<string, Bot> enemyNames = new Dictionary<string, Bot>();
-        //List<string> enemyNames = new List<string>(); //Parallel list so I don't have to iterate over bots to find it
         Bot curTarget = new Bot("null");
 
         //States
@@ -38,177 +41,194 @@ namespace CAP4053.Student
         public bool isFacingTarget = false;
         public bool isInRange = false;
 
+        //Rules i guess
+        public double farDistance = 600;
+        public string lastBotScanned = "null";
+        public int lastBotScannedAmt = 1;
+        public double lastKnownBearing = 0;
+        public int turnDirection = 1;
+
         public void scanEnv()
         {
-            Console.WriteLine("Scanning environment.");
+            Console.WriteLine("scanEnv()");
             isScanning = true;
             TurnRight(360);
-            if (!isFacingTarget)
-            {
-                Console.WriteLine("SCAN");
-                Scan();
-            }
             isScanning = false;
             Console.WriteLine("Finished!");
         }
 
         public void setTarget()
         {
-            Console.WriteLine("Calculating Target.");
+            Console.WriteLine("setTarget()");
             //Closest Target
             double closestBot = -1.0;
             foreach (Bot bot in enemyBots)
             {
-                Console.WriteLine("LOOP");
-                if (curTarget.botName == "null" || bot.lastKnownDistance < closestBot)
+                if (curTarget.botName == "null" || bot.roughDistance < closestBot)
                 {
-                    closestBot = bot.lastKnownDistance;
+                    Console.WriteLine("New Bot is: " + bot.botName);
+                    closestBot = bot.roughDistance;
                     curTarget = bot;
+                    hasTarget = true;
                 }
             }
-            Console.WriteLine("Current Target: " + curTarget.botName);
+            Console.WriteLine("Current Target: " + curTarget.botName + " with heading " + curTarget.roughHeading);
         }
 
-        public void circleTarget()
+        public void lookAtTarget()
         {
-            if (curTarget.botName != "null")
+            Console.WriteLine("lookAtTarget()");
+            double targetHeading = curTarget.roughHeading / lastBotScannedAmt;
+            Console.WriteLine(curTarget.botName + " " + curTarget.roughHeading + " " + curTarget.roughEnergy + " " + curTarget.roughDistance);
+            TurnRightRadians(Utils.NormalRelativeAngle(targetHeading - this.HeadingRadians));
+            //Scan();
+        }
+
+        public void shoot(ScannedRobotEvent e)
+        {
+            //Get the distance to determine how long it would take to get there
+            double bulletTime = e.Distance / 20.0;
+
+            double futureX = curTarget.roughX + curTarget.roughVelocity * bulletTime * Math.Sin(curTarget.roughHeading);
+            double futureY = curTarget.roughY + curTarget.roughVelocity * bulletTime * Math.Cos(curTarget.roughHeading);
+
+            double curDirX = futureX - curTarget.roughX;
+            double curDirY = futureY - curTarget.roughY;
+
+            double angleToOp = Math.Atan2(curDirX, curDirY);
+            SetTurnGunRightRadians(Utils.NormalRelativeAngle(angleToOp - this.GunHeadingRadians));
+
+            if (e.Distance > 600)
             {
-                double radius = curTarget.lastKnownDistance;
-                double angleToTarget = Math.Atan2(curTarget.lastKnownY - this.Y, curTarget.lastKnownX - this.X);
-                double centerX = curTarget.lastKnownX - Math.Sin(angleToTarget) * radius;
-                double centerY = curTarget.lastKnownY - Math.Cos(angleToTarget) * radius;
-
-                // Calculate the angle to the circle center
-                double angleToCenter = Math.Atan2(centerY - Y, centerX - X);
-                // Calculate the distance to the circle center
-                double distanceToCenter = Math.Sqrt((centerX - X) * (centerX - X) + (centerY - Y) * (centerY - Y));
-                SetTurnRightRadians(Utils.NormalRelativeAngle(angleToCenter - HeadingRadians));
-                SetAhead(distanceToCenter);
-
+                Fire(1);
+            }
+            else if (e.Distance > 400)
+            {
+                Fire(2);
+            }
+            else if (e.Distance > 200)
+            {
+                Fire(3);
+            }
+            else
+            {
+                Fire(4);
             }
         }
 
-        public void shootTarget(double distance_)
+        public void updateBots(ScannedRobotEvent e)
         {
-            Fire(1);
+            Bot curBot;
+            if (!enemyNames.TryGetValue(e.Name, out curBot))
+            {
+                // Bot does not exist in the dictionary, create a new one
+                Console.WriteLine("Adding " + e.Name);
+                curBot = new Bot(e.Name);
+                enemyNames[e.Name] = curBot;
+            }
+
+            // Update Bot Values
+            if (lastBotScanned == e.Name)
+            {
+                curBot.roughHeading += this.HeadingRadians;
+                lastBotScannedAmt++;
+            }
+            else
+            {
+                curBot.roughHeading = this.HeadingRadians;
+                lastBotScannedAmt = 1;
+            }
+            curBot.roughEnergy = e.Energy;
+            curBot.roughDistance = e.Distance;
+            curBot.roughVelocity = e.Velocity;
+
+            //Get Approx X Y Pos
+            double absoluteBearing = this.HeadingRadians + e.BearingRadians;
+            curBot.roughX = this.X + e.Distance * Math.Sin(absoluteBearing);
+            curBot.roughY = this.Y + e.Distance * Math.Cos(absoluteBearing);
+
+            //Get Approx X Y Direction Vector
+            double futureX = curTarget.roughX + curBot.roughVelocity * 1.0 * Math.Sin(curBot.roughHeading);
+            double futureY = curTarget.roughY + curBot.roughVelocity * 1.0 * Math.Cos(curBot.roughHeading);
+
+            curBot.roughDirX = futureX - curBot.roughX;
+            curBot.roughDirY = futureY - curBot.roughY;
+
+            Console.WriteLine("Direction X Y: " + curBot.roughDirX + "  " + curBot.roughDirY);
+
+            lastBotScanned = e.Name;
+
+
+            // Add/update the bot in the enemyBots list if necessary
+            if (!enemyBots.Contains(curBot))
+            {
+                enemyBots.Add(curBot);
+            }
+        }
+
+        public void stateSelector()
+        {
+            if (!hasTarget)
+            {
+                scanEnv(); //Can be inturupted
+            }
+            else
+            {
+                SetAhead(100);
+                //TurnRight(lastKnownBearing);
+                //if (!isFacingTarget)
+                //{
+                //    lookAtTarget();
+                //}
+                //Ahead(10);
+                //Execute();
+            }
         }
 
         override public void Run()
         {
-            scanEnv();
             while (true)
             {
-                if (isScanning)
-                {
-                    scanEnv();
-                }
-                if (isFacingTarget)
-                {
-                    if (!isInRange)
-                    {
-                        Ahead(100);
-                    }
-                }
+                stateSelector();
+                Execute();
             }
         }
 
         override public void OnScannedRobot(ScannedRobotEvent e)
         {
-            //isScanning = false;
-            Console.WriteLine("Enemy Bearing: " + e.Bearing);
-            TurnRight(e.Bearing);
-            if (Math.Abs(e.Bearing) < 0.01)
+            //Console.WriteLine("OnScannedRobot()");
+            SetTurnRight(e.Bearing);
+            //Fire(4);
+            lastKnownBearing = e.Bearing;
+            if (Math.Abs(e.Bearing) > 5)
             {
-                isFacingTarget = true;
+                isFacingTarget = false;
             }
-            if (isFacingTarget)
+
+            //Code from Robocode Crash Course 08 from Professor Spensor on YT to tell if it's left or right
+            if (e.Bearing >= 0)
             {
-                Console.WriteLine("Moving Forward!");
-                //Ahead(e.Distance / 2);
-                if (e.Distance < 100)
-                {
-                    isInRange = true;
-                }
-                else
-                {
-                    isInRange = false;
-                }
-                Bot curBot;
-                if (!enemyNames.TryGetValue(e.Name, out curBot))
-                {
-                    Console.WriteLine("Adding " + e.Name);
-                    curBot = new Bot(e.Name);
-                    enemyNames[e.Name] = curBot;
-                    curBot.bulletsReceived = 0;
-                    curBot.bulletsSent = 0;
-                    enemyBots.Add(curBot);
-                }
-                //Update Bot Values
-                curBot.lastKnownEnergy = e.Energy;
-                curBot.lastKnownDistance = e.Distance;
-                curBot.lastKnownVelocity = e.Velocity;
-                double enemyBearing = (this.HeadingRadians + e.BearingRadians) % (2 * Math.PI);
+                turnDirection = 1;
+            }
+            else
+            {
+                turnDirection = -1;
+            }
 
-
-                curBot.lastKnownX = this.X + (e.Distance * Math.Cos(enemyBearing));
-                curBot.lastKnownY = this.Y + (e.Distance * Math.Sin(enemyBearing));
-                Console.WriteLine("Dist: " + e.Distance);
-                Console.WriteLine("Enemy Bearing: " + enemyBearing);
-                Console.WriteLine("Target X: " + curBot.lastKnownX);
-                Console.WriteLine("Target Y: " + curBot.lastKnownY);
-                if (!isScanning)
+            if (isScanning)
+            {
+                setTarget();
+            }
+            updateBots(e);
+            shoot(e);
+            if (!isFacingTarget)
+            {
+                if (Math.Abs(e.Bearing) < 0.1)
                 {
-                    setTarget();
+                    isFacingTarget = true;
                 }
             }
         }
-
-        //When it sees another robot in the direction of the gun
-        /*
-        override public void OnScannedRobot(ScannedRobotEvent e)
-        {
-            isScanning = false;
-            Console.WriteLine("E BEARING RAD:" + e.BearingRadians);
-            if (true)
-            {
-                while (Math.Abs(e.Bearing) > 0.02)
-                {
-                    TurnRight(Math.Abs(e.Bearing));
-                    Execute(); // Execute the turn immediately
-                }
-
-                Console.WriteLine("Scanned Bot.");
-                Bot curBot;
-                if (!enemyNames.TryGetValue(e.Name, out curBot))
-                {
-                    Console.WriteLine("Adding " + e.Name);
-                    curBot = new Bot(e.Name);
-                    enemyNames[e.Name] = curBot;
-                    curBot.bulletsReceived = 0;
-                    curBot.bulletsSent = 0;
-                    enemyBots.Add(curBot);
-                }
-                //Update Bot Values
-                curBot.lastKnownEnergy = e.Energy;
-                curBot.lastKnownDistance = e.Distance;
-                curBot.lastKnownVelocity = e.Velocity;
-                double enemyBearing = (this.HeadingRadians + e.BearingRadians) % (2 * Math.PI);
-
-
-                curBot.lastKnownX = this.X + (e.Distance * Math.Cos(enemyBearing));
-                curBot.lastKnownY = this.Y + (e.Distance * Math.Sin(enemyBearing));
-                Console.WriteLine("Dist: " + e.Distance);
-                Console.WriteLine("Enemy Bearing: " + enemyBearing);
-                Console.WriteLine("Target X: " + curBot.lastKnownX);
-                Console.WriteLine("Target Y: " + curBot.lastKnownY);
-                if (!isScanning)
-                {
-                    setTarget();
-                    faceTarget();
-                }
-            }
-        }
-        */
 
         override public void OnBulletHit(BulletHitEvent e)
         {
@@ -227,12 +247,12 @@ namespace CAP4053.Student
 
         override public void OnHitByBullet(HitByBulletEvent e)
         {
-
+            SetTurnRight(e.Bearing);
         }
 
         override public void OnHitRobot(HitRobotEvent e)
         {
-
+            SetTurnRight(e.Bearing);
         }
 
         override public void OnHitWall(HitWallEvent e)
@@ -240,11 +260,6 @@ namespace CAP4053.Student
             //Back(100);
             //TurnRight(90);
             //TurnGunRight(360);
-
-        }
-
-        public new void Scan()
-        {
 
         }
     }
